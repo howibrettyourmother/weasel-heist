@@ -2,24 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" href="data:,">
 <title>WEASEL HEIST - A SHADYNASTY Production</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0;background:#07070c;height:100%;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:"Arial Black",Impact,Arial,sans-serif;color:#fff}
-#app{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;padding-top:env(safe-area-inset-top)}
-#wrap{position:relative;line-height:0}
+html,body{overscroll-behavior:none;position:fixed;inset:0;width:100%;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
+#app{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;height:100%;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);touch-action:none}
+#wrap{position:relative;line-height:0;flex:none}
 canvas{display:block;image-rendering:auto;touch-action:none;border-radius:6px;box-shadow:0 0 24px rgba(255,200,0,.25)}
-.hudbtn{position:absolute;top:4px;width:30px;height:30px;border-radius:50%;border:2px solid #ffd400;background:rgba(0,0,0,.6);color:#ffd400;font-size:14px;line-height:26px;text-align:center;cursor:pointer;padding:0;font-family:Arial,sans-serif;font-weight:bold}
+.hudbtn{position:absolute;top:4px;width:30px;height:30px;border-radius:50%;border:2px solid #ffd400;background:rgba(0,0,0,.6);color:#ffd400;font-size:14px;line-height:26px;text-align:center;cursor:pointer;padding:0;font-family:Arial,sans-serif;font-weight:bold;touch-action:manipulation}
 #muteBtn{right:4px}#musicBtn{right:40px}#pauseBtn{right:76px}
-#dpad{position:relative;width:168px;height:168px;margin-top:8px;display:none;touch-action:none}
-#dpad button{position:absolute;width:58px;height:58px;border-radius:14px;border:3px solid #ffd400;background:linear-gradient(#2a2a3a,#111);color:#ffd400;font-size:26px;font-family:Arial,sans-serif;touch-action:none;padding:0}
-#dpad button:active,#dpad button.on{background:#ffd400;color:#111}
-#dU{left:55px;top:0}#dD{left:55px;top:110px}#dL{left:0;top:55px}#dR{left:110px;top:55px}
-#dC{position:absolute;left:62px;top:62px;width:44px;height:44px;border-radius:50%;background:#1a1a24;border:2px solid #444;font-size:8px;line-height:40px;text-align:center;color:#888;font-family:Arial,sans-serif}
+body.touch .hudbtn{width:36px;height:36px;line-height:32px;font-size:16px}
+body.touch #musicBtn{right:46px}body.touch #pauseBtn{right:88px}
+/* D-pad: the whole lower area is the hit zone (quadrants around the centre); buttons are the visual targets */
+#dpad{position:relative;flex:1 1 auto;width:100%;min-height:0;display:none;touch-action:none;--b:88px;--g:8px}
 body.touch #dpad{display:block}
+#dpadCross{position:absolute;left:50%;top:50%;width:calc(var(--b)*3 + var(--g)*2);height:calc(var(--b)*3 + var(--g)*2);transform:translate(-50%,-50%);pointer-events:none}
+#dpad button{position:absolute;width:var(--b);height:var(--b);border-radius:20px;border:3px solid #ffd400;background:linear-gradient(#2e2e40,#111);color:#ffd400;font-size:calc(var(--b)*.44);line-height:1;font-family:Arial,sans-serif;touch-action:none;padding:0;pointer-events:auto;box-shadow:0 4px 0 #6b5a00,0 0 14px rgba(255,212,0,.25);display:flex;align-items:center;justify-content:center}
+#dpad button:active,#dpad button.on{background:#ffd400;color:#111;transform:translateY(2px);box-shadow:0 2px 0 #6b5a00,0 0 22px rgba(255,212,0,.7)}
+#dU{left:calc(var(--b) + var(--g));top:0}
+#dD{left:calc(var(--b) + var(--g));top:calc(var(--b)*2 + var(--g)*2)}
+#dL{left:0;top:calc(var(--b) + var(--g))}
+#dR{left:calc(var(--b)*2 + var(--g)*2);top:calc(var(--b) + var(--g))}
+#dC{position:absolute;left:calc(var(--b) + var(--g));top:calc(var(--b) + var(--g));width:var(--b);height:var(--b);border-radius:50%;background:radial-gradient(#22222e,#111118);border:2px solid #444;font-size:10px;display:flex;align-items:center;justify-content:center;text-align:center;color:#888;font-family:Arial,sans-serif;line-height:1.2}
+body.land #app{flex-direction:row;justify-content:center;align-items:center}
+body.land #dpad{height:100%;flex:1 1 auto}
 </style>
 </head>
 <body>
@@ -31,11 +41,13 @@ body.touch #dpad{display:block}
     <button class="hudbtn" id="pauseBtn" aria-label="Pause">II</button>
   </div>
   <div id="dpad" aria-label="On-screen D-pad">
-    <button id="dU" data-d="u">&#9650;</button>
-    <button id="dL" data-d="l">&#9664;</button>
-    <button id="dR" data-d="r">&#9654;</button>
-    <button id="dD" data-d="d">&#9660;</button>
-    <div id="dC">SWIPE OK</div>
+   <div id="dpadCross">
+    <button id="dU" data-d="u" aria-label="Up">&#9650;</button>
+    <button id="dL" data-d="l" aria-label="Left">&#9664;</button>
+    <button id="dR" data-d="r" aria-label="Right">&#9654;</button>
+    <button id="dD" data-d="d" aria-label="Down">&#9660;</button>
+    <div id="dC">DRAG<br>OR<br>SWIPE</div>
+   </div>
   </div>
 </div>
 <script>
@@ -100,14 +112,29 @@ const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 let DPR=Math.min(3,window.devicePixelRatio||1);
 const isTouch=('ontouchstart' in window)||(navigator.maxTouchPoints>0)||matchMedia('(pointer:coarse)').matches;
 if(isTouch)document.body.classList.add('touch');
+let BTN=88;
 function resize(){
   DPR=Math.min(3,window.devicePixelRatio||1);
   cv.width=W*DPR;cv.height=H*DPR;
-  const dp=isTouch?184:0;
-  const s=Math.min(window.innerWidth/W,(window.innerHeight-dp-6)/H);
+  const app=document.getElementById('app'),cs=getComputedStyle(app);
+  const vw=window.innerWidth,vh=window.innerHeight-(parseFloat(cs.paddingTop)||0)-(parseFloat(cs.paddingBottom)||0);
+  let s;
+  if(!isTouch){document.body.classList.remove('land');s=Math.min(vw/W,(vh-6)/H)}
+  else{
+    const g=8,land=vw>vh*1.15;document.body.classList.toggle('land',land);
+    if(land){ // landscape: d-pad beside the maze
+      BTN=Math.max(80,Math.min(96,Math.floor((vh*0.8-2*g)/3)));
+      s=Math.min((vw-(3*BTN+2*g)-24)/W,(vh-4)/H);
+    }else{ // portrait: d-pad under the maze, never overlapping it
+      BTN=Math.max(80,Math.min(96,Math.floor((vh*0.36-2*g)/3)));
+      const pad=3*BTN+2*g+14;
+      s=Math.min(vw/W,(vh-pad)/H);
+    }
+    const dp=document.getElementById('dpad');dp.style.setProperty('--b',BTN+'px');dp.style.setProperty('--g',g+'px');
+  }
   cv.style.width=(W*s)+'px';cv.style.height=(H*s)+'px';
 }
-window.addEventListener('resize',resize);resize();
+window.addEventListener('resize',resize);window.addEventListener('orientationchange',()=>setTimeout(resize,200));resize();
 
 const weaselImg=new Image();let weaselOK=false;
 weaselImg.onload=()=>{weaselOK=true};
@@ -496,9 +523,25 @@ function moveEnt(e,dist,decide){
     if(d<=dist){e.x=e.tx;e.y=e.ty;dist-=d}else{e.x+=Math.sign(dx)*dist;e.y+=Math.sign(dy)*dist;dist=0}
   }
 }
+const TURN_BUF=0.45,TURN_TOL=0.45,TURN_BACK=0.28; // buffered-turn window (s) + corner tolerance (tiles)
 function playerDecide(p){
   if(p.next&&!wall(p,p.x+p.next.x,p.y+p.next.y))p.dir=p.next;
-  else if(p.dir&&wall(p,p.x+p.dir.x,p.y+p.dir.y))p.dir=null;
+  else{
+    // buffered turn: keep it at least TURN_BUF s, then drop it once we pass a junction where it wasn't possible
+    if(p.next&&p.dir&&p.next!==p.dir&&gTime-(p.nextT||0)>TURN_BUF&&openDirs(p).length>=3)p.next=p.dir;
+    if(p.dir&&wall(p,p.x+p.dir.x,p.y+p.dir.y))p.dir=null;
+  }
+}
+// corner-cutting: a perpendicular turn pressed slightly early/late near a tile centre snaps onto it
+function tryCornerTurn(p){
+  const n=p.next,d=p.dir;
+  if(!n||!d||n===d||(n.x===d.x&&n.y===d.y)||isRev(n,d))return;
+  if(p.x===p.tx&&p.y===p.ty)return;
+  const fx=p.tx-d.x,fy=p.ty-d.y;
+  const back=Math.abs(p.x-fx)+Math.abs(p.y-fy),ahead=1-back;
+  const okAt=(cx,cy)=>cx>=0&&cx<COLS&&!wall(p,cx,cy)&&!wall(p,cx+n.x,cy+n.y);
+  if(ahead<=TURN_TOL&&okAt(p.tx,p.ty)){p.x=p.tx;p.y=p.ty;p.dir=n;p.tx+=n.x;p.ty+=n.y;return true}
+  if(back<=TURN_BACK&&okAt(fx,fy)){p.x=fx;p.y=fy;p.dir=n;p.tx=fx+n.x;p.ty=fy+n.y;return true}
 }
 function isRev(a,b){return a&&b&&a.x===-b.x&&a.y===-b.y}
 function openDirs(e){return DLIST.filter(d=>!wall(e,e.x+d.x,e.y+d.y))}
@@ -532,7 +575,7 @@ function reverseEnt(e){if(e.dir&&!(e.x===e.tx&&e.y===e.ty)){e.tx-=e.dir.x;e.ty-=
 
 function setupLevel(fresh){
   if(fresh)resetMaze();
-  player=mkEnt('player',9,15);player.dir=DIRS.l;player.next=DIRS.l;player.anim=0;
+  player=mkEnt('player',9,15);player.dir=DIRS.l;player.next=DIRS.l;player.nextT=0;player.anim=0;
   ints=[];picks=[];star=null;powerT=0;fx={speed:0,dbl:0,freeze:0,inv:0};modeT=0;scatter=true;
   const n=isBoss(level)?3:Math.min(8,3+level);
   ghosts=[];
@@ -565,8 +608,10 @@ function setDir(k,kb){
   ac();
   if(state==='title'||state==='gameover'||state==='victory'){tapAdvance(kb);return}
   const d=DIRS[k];if(!d||!player)return;
-  player.next=d;
+  if(player.next!==d||player.dir!==d){if(state==='play'&&player.next!==d)buzz();}
+  player.next=d;player.nextT=gTime;
   if(isRev(d,player.dir))reverseEnt(player);
+  else if(state==='play'&&!paused)tryCornerTurn(player);
 }
 function tapAdvance(fromKey){
   const fresh=!AUD.unlocked||AUD.unlockAge()<900;ac();
@@ -583,18 +628,64 @@ window.addEventListener('keydown',e=>{
   else if(e.key==='n'||e.key==='N')musicBtn.click();
   else if(e.key==='p'||e.key==='P'||e.key==='Escape')togglePause();
 });
-let tStart=null,titleSoundAck=false;
-cv.addEventListener('touchstart',e=>{e.preventDefault();ac();const t=e.changedTouches[0];tStart={x:t.clientX,y:t.clientY,moved:false}},{passive:false});
-cv.addEventListener('touchmove',e=>{e.preventDefault();if(!tStart)return;const t=e.changedTouches[0];const dx=t.clientX-tStart.x,dy=t.clientY-tStart.y;
-  if(Math.hypot(dx,dy)>22){setDir(Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u'));tStart={x:t.clientX,y:t.clientY,moved:true}}},{passive:false});
-cv.addEventListener('touchend',e=>{e.preventDefault();if(tStart&&!tStart.moved)tapAdvance();tStart=null},{passive:false});
+let titleSoundAck=false;
+function buzz(){try{if(navigator.vibrate)navigator.vibrate(10)}catch(e){}}
+// ---- touch: swipe/drag anywhere (incl. over the d-pad) + big quadrant d-pad ----
+const dpadEl=document.getElementById('dpad'),dCenter=document.getElementById('dC'),dBtns=[...document.querySelectorAll('#dpad button')];
+const SWIPE=12,PAD_SWIPE=30,JOY_R=22; // px: swipe threshold, on-pad drag threshold, floating joystick radius
+const touches=new Map();
+function dirOf(dx,dy){return Math.abs(dx)>Math.abs(dy)?(dx>0?'r':'l'):(dy>0?'d':'u')}
+function onPad(x,y){if(!isTouch)return false;const r=dpadEl.getBoundingClientRect();return r.width>0&&x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
+function padQuad(x,y){const c=dCenter.getBoundingClientRect(),dx=x-(c.left+c.width/2),dy=y-(c.top+c.height/2);
+  return Math.hypot(dx,dy)<BTN*0.3?null:dirOf(dx,dy)}
+function hl(){const on=new Set();for(const t of touches.values())if(t.pad&&t.d)on.add(t.d);for(const b of dBtns)b.classList.toggle('on',on.has(b.dataset.d))}
+function press(t,d){if(!d||t.d===d)return;t.d=d;setDir(d);hl()}
+function isHud(e){return e.target&&e.target.closest&&e.target.closest('.hudbtn')}
+document.addEventListener('touchstart',e=>{
+  if(isHud(e))return; // let the HUD buttons receive their click
+  e.preventDefault();ac();
+  for(const ct of e.changedTouches){
+    const x=ct.clientX,y=ct.clientY,pad=onPad(x,y);
+    const t={sx:x,sy:y,ax:x,ay:y,pad,q:pad?padQuad(x,y):null,moved:false,d:null};
+    touches.set(ct.identifier,t);
+    if(pad&&t.q)press(t,t.q);
+  }
+},{passive:false});
+document.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  for(const ct of e.changedTouches){
+    const t=touches.get(ct.identifier);if(!t)continue;
+    const x=ct.clientX,y=ct.clientY;
+    let dx=x-t.ax,dy=y-t.ay,dist=Math.hypot(dx,dy);
+    if(t.pad){
+      // sliding onto another d-pad quadrant switches to it; a real drag/swipe on the pad works too
+      const q=onPad(x,y)?padQuad(x,y):null;
+      if(q&&q!==t.q){t.q=q;t.moved=true;press(t,q);t.ax=x;t.ay=y;continue}
+      if(Math.hypot(x-t.sx,y-t.sy)<PAD_SWIPE&&!t.moved)continue;
+    }else if(dist<SWIPE&&!t.moved)continue;
+    if(dist>=SWIPE){
+      t.moved=true;
+      const ax=Math.abs(dx),ay=Math.abs(dy);
+      if(!t.d||Math.max(ax,ay)>Math.min(ax,ay)*1.25)press(t,dirOf(dx,dy)); // hysteresis on diagonals
+      if(dist>JOY_R){t.ax=x-dx/dist*JOY_R;t.ay=y-dy/dist*JOY_R} // floating joystick anchor
+    }
+  }
+},{passive:false});
+function tEnd(e){
+  if(isHud(e))return;
+  e.preventDefault();ac();
+  for(const ct of e.changedTouches){
+    const t=touches.get(ct.identifier);if(!t)continue;touches.delete(ct.identifier);
+    if(e.type==='touchend'&&!t.moved&&!t.pad)tapAdvance();
+  }
+  hl();
+}
+document.addEventListener('touchend',tEnd,{passive:false});
+document.addEventListener('touchcancel',tEnd,{passive:false});
+['gesturestart','gesturechange','dblclick'].forEach(ev=>document.addEventListener(ev,e=>e.preventDefault(),{passive:false}));
 cv.addEventListener('mousedown',()=>{ac();tapAdvance()});
-document.querySelectorAll('#dpad button').forEach(b=>{
-  const on=e=>{e.preventDefault();b.classList.add('on');setDir(b.dataset.d)};
-  const off=e=>{e.preventDefault();b.classList.remove('on')};
-  b.addEventListener('touchstart',on,{passive:false});b.addEventListener('touchend',off,{passive:false});
-  b.addEventListener('mousedown',on);b.addEventListener('mouseup',off);b.addEventListener('mouseleave',off);
-});
+dpadEl.addEventListener('mousedown',e=>{const q=padQuad(e.clientX,e.clientY);if(q){setDir(q);for(const b of dBtns)b.classList.toggle('on',b.dataset.d===q)}});
+window.addEventListener('mouseup',()=>{if(!touches.size)for(const b of dBtns)b.classList.remove('on')});
 function togglePause(){if(state==='play'||state==='ready'){paused=!paused}}
 document.getElementById('pauseBtn').addEventListener('click',e=>{e.stopPropagation();ac();togglePause()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&state==='play')paused=true});
@@ -621,6 +712,7 @@ function update(dt){
   hecT-=dt;if(hecT<=0){SFX.ambient();hecT=10+Math.random()*9}
   // player
   const pspd=5.4*(fx.speed>0?1.45:1)*(1+Math.min(level,8)*0.015);
+  tryCornerTurn(player);
   moveEnt(player,pspd*dt,playerDecide);
   player.anim+=dt*(player.dir?12:0);
   const pc=wrapC(Math.round(player.x)),pr=Math.round(player.y);
